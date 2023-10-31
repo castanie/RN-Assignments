@@ -4,11 +4,21 @@
 package pop3.client;
 
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
-    }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+        try (var pop3Client = new Pop3Client()) {
+            pop3Client.open("outlook.office365.com", 995);
+            pop3Client.readResponse();
+            pop3Client.user("dan.egg@outlook.com");
+            pop3Client.readResponse();
+            pop3Client.pass("");
+            pop3Client.readResponse();
+            pop3Client.stat();
+            pop3Client.readResponse();
+            pop3Client.quit();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+
 }
