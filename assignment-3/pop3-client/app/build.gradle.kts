@@ -23,6 +23,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation("com.google.guava:guava:32.1.1-jre")
+
+    // This dependency is used by the application.
+    implementation("io.github.cdimascio:dotenv-kotlin:6.4.1")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
