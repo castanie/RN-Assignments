@@ -3,18 +3,19 @@
  */
 package pop3.client;
 
+import io.github.cdimascio.dotenv.Dotenv;
+
 public class App {
 
     public static void main(String[] args) {
+        var dotenv = Dotenv.load();
         try (var pop3Client = new Pop3Client()) {
             pop3Client.open("outlook.office365.com", 995);
-            pop3Client.readResponse();
-            pop3Client.user("dan.egg@outlook.com");
-            pop3Client.readResponse();
-            pop3Client.pass("");
-            pop3Client.readResponse();
+            pop3Client.user(dotenv.get("POP3_CLIENT_USERNAME"));
+            pop3Client.pass(dotenv.get("POP3_CLIENT_PASSWORD"));
             pop3Client.stat();
-            pop3Client.readResponse();
+            pop3Client.list(1);
+            pop3Client.retr(1);
             pop3Client.quit();
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -2,13 +2,12 @@ package pop3.client;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 
 public class Pop3Client implements AutoCloseable {
     private Socket clientSocket;
     private BufferedReader inputReader;
     private BufferedWriter outputWriter;
-
 
     public void open(String host, Integer port) throws IOException {
         this.clientSocket = SSLSocketFactory.getDefault().createSocket(host, port);
@@ -32,14 +31,29 @@ public class Pop3Client implements AutoCloseable {
         }
     }
 
-    public void readResponse() {
+    private void readSingleLineResponse() {
         try {
-            System.out.println(this.inputReader.readLine());
+            String response = this.inputReader.readLine();
+            System.out.println(response);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    private void readMultiLineResponse() {
+        try {
+            var response = this.inputReader.readLine();
+            System.out.println(response);
+            if (response.startsWith("-ERR")) {
+                return;
+            }
+            while (!(response = this.inputReader.readLine()).equals(".")) {
+                System.out.println(response);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Arguments: none
@@ -64,8 +78,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void stat() {
         sendCommand("STAT");
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments:
@@ -106,12 +120,13 @@ public class Pop3Client implements AutoCloseable {
      */
     public void list() {
         sendCommand("LIST");
+        readMultiLineResponse();
     }
 
     public void list(int number) {
         sendCommand("LIST " + number);
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments:
@@ -130,8 +145,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void retr(int number) {
         sendCommand("RETR " + number);
+        readMultiLineResponse();
     }
-
 
     /**
      * Arguments:
@@ -150,8 +165,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void dele(int number) {
         sendCommand("DELE " + number);
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments: none
@@ -165,8 +180,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void noop() {
         sendCommand("NOOP");
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments: none
@@ -181,8 +196,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void rset() {
         sendCommand("RSET");
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments:
@@ -212,8 +227,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void user(String username) {
         sendCommand("USER " + username);
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments:
@@ -235,8 +250,8 @@ public class Pop3Client implements AutoCloseable {
      */
     public void pass(String password) {
         sendCommand("PASS " + password);
+        readSingleLineResponse();
     }
-
 
     /**
      * Arguments: none
@@ -258,5 +273,6 @@ public class Pop3Client implements AutoCloseable {
      */
     public void quit() {
         sendCommand("QUIT");
+        readSingleLineResponse();
     }
 }
