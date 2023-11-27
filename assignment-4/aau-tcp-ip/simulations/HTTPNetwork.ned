@@ -21,16 +21,26 @@ package aau_http.simulations;
 
 import aau_http.app.HTTPClient;
 import aau_http.app.HTTPServer;
+import ned.DelayChannel;
 
 network HTTPNetwork
 {
     parameters:
         // TODO add global parameters (if needed)
-        
+        @display("bgb=200,120");
+
     submodules:
         // TODO add submodules comprising a HTTPClient and HTTPServer
-        
+        httpClient: HTTPClient {
+            @display("p=30,30");
+        }
+        httpServer: HTTPServer {
+            @display("p=150,70");
+        }
+
     connections:
         // TODO connect HTTPClient and HTTPServer
-
+        httpClient.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> httpServer.fromLowerLayer;
+        httpServer.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> httpClient.fromLowerLayer;
+        
 }

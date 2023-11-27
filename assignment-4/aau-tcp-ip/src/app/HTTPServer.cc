@@ -17,6 +17,8 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
+#include <unordered_map>
+
 #include "HTTPServer.h"
 #include "HTTPClientMsg_m.h"
 #include "HTTPServerMsg_m.h"
@@ -31,4 +33,40 @@ void HTTPServer::initialize()
 void HTTPServer::handleMessage(cMessage *msg)
 {
     // TODO implement handleMessage
+    HTTPClientMsg *clientMsg = check_and_cast<HTTPClientMsg *>(msg);
+    HTTPServerMsg *serverMsg = new HTTPServerMsg("500 Internal Server Error");
+
+    std::unordered_map<std::string, std::string> responseDict =
+        {
+            {
+                "GET /demo/\r\n",
+                "<html>\n\n<head>\n    <title>Demo Web Site 2023</title>\n</head>\n\n<body>\n    <img src=\"logo.gif\" />\n    <h1>Welcome</h1> <img src=\"TechnikErleben.png\" />\n</body>\n\n</html>",
+            },
+            {
+                "GET /demo/logo.gif\r\n",
+                "logo.gif",
+            },
+            {
+                "GET /demo/TechnikErleben.png\r\n",
+                "TechnikErleben.png",
+            },
+        };
+
+    if (clientMsg)
+    {
+        std::string request = clientMsg->getResource();
+        std::string response;
+        if (responseDict.find(request) != responseDict.end())
+        {
+            response = responseDict[request];
+        }
+        else
+        {
+            response = "404 Not Found";
+        }
+        serverMsg->setResponse(response.c_str());
+    }
+
+    send(serverMsg, "toLowerLayer");
+    delete msg;
 }

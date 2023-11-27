@@ -23,10 +23,30 @@
 
 Define_Module(HTTPClient);
 
-void HTTPClient::initialize() {
+void HTTPClient::initialize()
+{
     // TODO implement initialize
+    std::string arr[] = {
+        "GET /demo/\r\n",
+        "GET /demo/logo.gif\r\n",
+        "GET /demo/TechnikErleben.png\r\n",
+    };
+
+    for (const auto &request : arr)
+    {
+        HTTPClientMsg *clientMsg = new HTTPClientMsg();
+        clientMsg->setResource(request.c_str());
+        send(clientMsg, "toLowerLayer");
+    }
 }
 
-void HTTPClient::handleMessage(cMessage *msg) {
+void HTTPClient::handleMessage(cMessage *msg)
+{
     // TODO implement handleMessage
+    HTTPServerMsg *serverMsg = check_and_cast<HTTPServerMsg *>(msg);
+    if (serverMsg)
+    {
+        std::string response = serverMsg->getResponse();
+        EV << response << endl;
+    }
 }

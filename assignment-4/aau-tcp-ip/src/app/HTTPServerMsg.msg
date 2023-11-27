@@ -19,4 +19,5 @@
 
 packet HTTPServerMsg {
     // TODO define HTTPServerMsg comprising at least a response field
+    string response;
 }
