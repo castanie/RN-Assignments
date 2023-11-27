@@ -1,0 +1,5 @@
+# Ignore OMNeT++ simulation-specific results directory
+simulations/results
+
+# Ignore OMNeT++ build output directory
+out
