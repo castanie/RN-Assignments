@@ -24,9 +24,15 @@
 
 Define_Module(TCP);
 
+private:
+int seqn;
+int ackn;
+
 void TCP::initialize()
 {
     // TODO Initialize seqn and ackn.
+    seqn = std::rand();
+    ackn = -1;
 }
 
 void TCP::handleMessage(cMessage *msg)
@@ -50,7 +56,53 @@ void TCP::handleMessage(cMessage *msg)
 
 void TCP::handleAppMessage(cPacket *msg)
 {
-    // TODO handle input from upper layer
+    TCPSegment *segment;
+
+    // Establish connection:
+
+    //// Send SYN
+    *segment = new TCPSegment();
+    segment->setSeqNr();
+    segment->setSyn(true);
+    send(segment, "toLowerLayer");
+    //// Receive SYN-ACK
+    while (true)
+    {
+        *segment = receive();
+        if (segment->getSyn() && segment->getAck())
+        {
+            break;
+        }
+    }
+    //// Send ACK
+    *segment = new TCPSegment();
+    segment->setAck(true);
+    send(segment, "toLowerLayer");
+
+    // Send data:
+
+    //// Split into data segments with max. 1,500 bytes
+    int maxSegmentSize = 1500;
+    int segmentCount = ceil((double)msg->getByteLength() / maxSegmentSize);
+
+    for (int i = 0; i < segmentCount; i++)
+    {
+        int segmentSize = (i < segmentCount - 1) ? maxSegmentSize : msg->getByteLength() % maxSegmentSize;
+
+        segment->setByteLength(segmentSize);
+
+        send(segment, "toLowerLayer");
+
+        //// Set timeout
+        cMessage *timeoutNotification = new cMessage("timeout");
+        scheduleAt(simTime() + timeoutDuration, timeoutNotification);
+    }
+
+    // Terminate connection:
+
+    *segment = new TCPSegment();
+    segment->setFin(true);
+    send(segment, "toLowerLayer");
 }
 
 void TCP::handleTCPSegment(cPacket *msg)
