@@ -19,28 +19,38 @@
 
 package aau_http.simulations;
 
-import aau_http.app.HTTPClient;
-import aau_http.app.HTTPServer;
+import src.app.HTTPClient;
+import src.app.HTTPServer;
+import src.tcp.TCP;
 import ned.DelayChannel;
+
 
 network HTTPNetwork
 {
     parameters:
         // TODO add global parameters (if needed)
-        @display("bgb=200,120");
+        @display("bgb=307.52,131.44");
 
     submodules:
         // TODO add submodules comprising a HTTPClient and HTTPServer
         httpClient: HTTPClient {
-            @display("p=30,30");
+            @display("p=47.12,31");
         }
         httpServer: HTTPServer {
-            @display("p=150,70");
+            @display("p=248.62,31");
         }
 
+        tcpClientSide: TCP {
+            @display("p=47.12,107.26");
+        }
+        tcpServerSide: TCP {
+            @display("p=248.62,107.26");
+        }
     connections:
-        // TODO connect HTTPClient and HTTPServer
-        httpClient.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> httpServer.fromLowerLayer;
-        httpServer.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> httpClient.fromLowerLayer;
-        
+        httpClient.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> tcpClientSide.fromUpperLayer;
+        tcpClientSide.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> tcpServerSide.fromLowerLayer;
+        tcpClientSide.toUpperLayer --> DelayChannel {  delay = 0.1s; } --> httpClient.fromLowerLayer;
+        httpServer.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> tcpServerSide.fromUpperLayer;
+        tcpServerSide.toLowerLayer --> DelayChannel {  delay = 0.1s; } --> tcpClientSide.fromLowerLayer;
+        tcpServerSide.toUpperLayer --> DelayChannel {  delay = 0.1s; } --> httpServer.fromLowerLayer;
 }

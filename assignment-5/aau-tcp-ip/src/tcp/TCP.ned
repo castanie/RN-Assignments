@@ -24,6 +24,7 @@ simple TCP
     parameters:
         int headerlength = default(20); 		// Length of header in bytes
         double packetLossProb = default(0.2);
+        int initialState = default("CLOSED");
     gates:
 		input fromUpperLayer;
 		output toUpperLayer;

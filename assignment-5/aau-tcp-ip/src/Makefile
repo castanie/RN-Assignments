@@ -1,5 +1,5 @@
 #
-# OMNeT++/OMNEST Makefile for aau_tcp
+# OMNeT++/OMNEST Makefile for aau-tcp-ip
 #
 # This file was generated with the command:
 #  opp_makemake -f --deep
@@ -7,7 +7,7 @@
 
 # Name of target to be created (-o option)
 TARGET_DIR = .
-TARGET_NAME = aau_tcp$(D)
+TARGET_NAME = aau-tcp-ip$(D)
 TARGET = $(TARGET_NAME)$(EXE_SUFFIX)
 TARGET_IMPLIB = $(TARGET_NAME)$(IMPLIB_SUFFIX)
 TARGET_IMPDEF = $(TARGET_NAME)$(IMPDEF_SUFFIX)
@@ -33,10 +33,24 @@ PROJECTRELATIVE_PATH = src
 O = $(PROJECT_OUTPUT_DIR)/$(CONFIGNAME)/$(PROJECTRELATIVE_PATH)
 
 # Object files for local .cc, .msg and .sm files
-OBJS = $O/tcp/TCP.o $O/tcp/TCPControlInfo_m.o $O/tcp/TCPSegment_m.o
+OBJS = \
+    $O/3rdParty/Compat.o \
+    $O/3rdParty/InitStages.o \
+    $O/3rdParty/IPv4Address.o \
+    $O/3rdParty/IPv6Address.o \
+    $O/3rdParty/MACAddress.o \
+    $O/app/HTTPClient.o \
+    $O/app/HTTPServer.o \
+    $O/tcp/TCP.o \
+    $O/app/HTTPClientMsg_m.o \
+    $O/app/HTTPServerMsg_m.o \
+    $O/tcp/TCPControlInfo_m.o \
+    $O/tcp/TCPSegment_m.o
 
 # Message files
 MSGFILES = \
+    app/HTTPClientMsg.msg \
+    app/HTTPServerMsg.msg \
     tcp/TCPControlInfo.msg \
     tcp/TCPSegment.msg
 
@@ -102,6 +116,7 @@ $O/$(TARGET): $(OBJS)  $(wildcard $(EXTRA_OBJS)) Makefile $(CONFIGFILE)
 
 # disabling all implicit rules
 .SUFFIXES :
+.PRECIOUS : %_m.h %_m.cc
 
 $O/%.o: %.cc $(COPTS_FILE) | msgheaders smheaders
 	@$(MKPATH) $(dir $@)

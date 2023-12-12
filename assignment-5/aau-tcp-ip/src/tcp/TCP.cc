@@ -17,27 +17,54 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
-#include "TCP.h"
 #include <stdio.h>
+#include <queue>
 #include "../3rdParty/IPv4Address.h"
 #include "../3rdParty/IPv6Address.h"
+#include "TCP.h"
 
 Define_Module(TCP);
 
-private:
+enum Event
+{
+    OPEN,
+    SEND,
+    RECEIVE,
+    CLOSE,
+    ABORT,
+    STATUS,
+};
+
+enum State
+{
+    LISTEN,
+    SYN_SENT,
+    SYN_RECEIVED,
+    ESTABLISHED,
+    FIN_WAIT_1,
+    FIN_WAIT_2,
+    CLOSE_WAIT,
+    CLOSING,
+    LAST_ACK,
+    TIME_WAIT,
+    CLOSED,
+};
+
+parameters : State current_state = LISTEN;
+
 int seqn;
 int ackn;
+std::queue<cMessage *> *message_queue;
 
 void TCP::initialize()
 {
-    // TODO Initialize seqn and ackn.
     seqn = std::rand();
     ackn = -1;
+    message_queue = new std::queue<cMessage *>();
 }
 
 void TCP::handleMessage(cMessage *msg)
 {
-
     // TODO Handle timeouts.
     // TODO Simulate packet loss.
 
@@ -50,62 +77,114 @@ void TCP::handleMessage(cMessage *msg)
     else if (msg->arrivedOn("fromLowerLayer"))
     {
         // Comes from lower layer.
+        // Packet loss:
+        if (uniform(0, 1) < par("packetLossProb"))
+        {
+            return;
+        }
         this->handleTCPSegment((cPacket *)msg);
     }
 }
 
 void TCP::handleAppMessage(cPacket *msg)
 {
-    TCPSegment *segment;
-
-    // Establish connection:
-
-    //// Send SYN
-    *segment = new TCPSegment();
-    segment->setSeqNr();
-    segment->setSyn(true);
-    send(segment, "toLowerLayer");
-    //// Receive SYN-ACK
-    while (true)
+    TCPSegment *message = (TCPSegment *)msg;
+    if (message)
     {
-        *segment = receive();
-        if (segment->getSyn() && segment->getAck())
-        {
-            break;
-        }
-    }
-    //// Send ACK
-    *segment = new TCPSegment();
-    segment->setAck(true);
-    send(segment, "toLowerLayer");
-
-    // Send data:
-
-    //// Split into data segments with max. 1,500 bytes
-    int maxSegmentSize = 1500;
-    int segmentCount = ceil((double)msg->getByteLength() / maxSegmentSize);
-
-    for (int i = 0; i < segmentCount; i++)
-    {
-        int segmentSize = (i < segmentCount - 1) ? maxSegmentSize : msg->getByteLength() % maxSegmentSize;
-
-        segment->setByteLength(segmentSize);
-
-        send(segment, "toLowerLayer");
-
-        //// Set timeout
-        cMessage *timeoutNotification = new cMessage("timeout");
-        scheduleAt(simTime() + timeoutDuration, timeoutNotification);
+        message_queue->push(message);
     }
 
-    // Terminate connection:
+    // TCP control:
+    // Determine event.
+    // tcpCommand = 0 -> return;
+    // tcpCommand = 1 -> current_state = LISTEN;
+    // tcpCommand = 2 -> current_state = CLOSED;
+    // Determine source and destination.
+    // return;
 
-    *segment = new TCPSegment();
-    segment->setFin(true);
-    send(segment, "toLowerLayer");
+    TCPSegment *syn_segment = new TCPSegment();
+
+    switch (current_state)
+    {
+    case CLOSED:
+        break;
+    case LISTEN:
+        syn_segment->setSeqNr(seqn);
+        syn_segment->setAckNr(ackn);
+        syn_segment->setSyn(true);
+        send(syn_segment->dup(), "toLowerLayer");
+        scheduleAt(simTime() + 1.0, message);
+        current_state = SYN_SENT;
+        break;
+    case SYN_SENT:
+        // Queue, no connection yet (waiting for server-side ACK).
+        break;
+    case SYN_RECEIVED:
+        // Queue, no connection yet (waiting for client-side ACK).
+        break;
+    case ESTABLISHED:
+        // Pack data and relay "toLowerLayer".
+        // Skip for now:
+        send(message_queue->front()->dup(), "toLowerLayer");
+        scheduleAt(simTime() + 1.0, message);
+        break;
+    default:
+        break;
+    }
+
+    // Clean up:
+    delete message;
 }
 
 void TCP::handleTCPSegment(cPacket *msg)
 {
-    // TODO handle input from lower layer
+    TCPSegment *segment = (TCPSegment *)msg;
+
+    // TCP segment:
+    // ...
+
+    TCPSegment *synack_segment = new TCPSegment();
+    TCPSegment *ack_segment = new TCPSegment();
+
+    switch (current_state)
+    {
+    case CLOSED:
+        break;
+    case LISTEN:
+        synack_segment->setSeqNr(seqn);
+        synack_segment->setAckNr(ackn);
+        synack_segment->setSyn(true);
+        synack_segment->setAck(true);
+        send(synack_segment->dup(), "toLowerLayer");
+        scheduleAt(simTime() + 1.0, segment);
+        current_state = SYN_SENT;
+        break;
+    case SYN_SENT:
+        // Check if server-side SYN-ACK, or at least ACK.
+        if (segment->getSyn() && segment->getAck()) // && (segment->getAckNr() == )
+        {
+            cancelEvent(synack_segment);
+            ack_segment->setSeqNr(seqn);
+            ack_segment->setAckNr(ackn);
+            ack_segment->setAck(true);
+            send(ack_segment, "toLowerLayer");
+            scheduleAt(simTime() + 1.0, segment);
+            current_state = ESTABLISHED;
+        }
+        break;
+    case SYN_RECEIVED:
+        // Check if client-side ACK.
+        break;
+    case ESTABLISHED:
+        // Unpack data and relay "toUpperLayer".
+        // Skip for now:
+        send(segment->dup(), "toUpperLayer");
+        scheduleAt(simTime() + 1.0, segment);
+        break;
+    default:
+        break;
+    }
+
+    // Clean up:
+    delete segment;
 }
