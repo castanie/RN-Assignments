@@ -1,0 +1,6 @@
+# Ignore OMNeT++ settings:
+.metadata
+
+# Ignore OMNeT++ output:
+out
+simulations/results

@@ -17,17 +17,11 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
-package src.tcp;
+package src.app;
 
-simple TCP
+simple HTTPClient
 {
-    parameters:
-        int headerlength = default(20); 		// Length of header in bytes
-        double packetLossProb = default(0.1);
-        int initialState = default("CLOSED");
     gates:
-		input fromUpperLayer;
-		output toUpperLayer;
-		input fromLowerLayer;
-		output toLowerLayer;
+        input fromLowerLayer;
+        output toLowerLayer;
 }

@@ -17,17 +17,8 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
-package src.tcp;
-
-simple TCP
-{
-    parameters:
-        int headerlength = default(20); 		// Length of header in bytes
-        double packetLossProb = default(0.1);
-        int initialState = default("CLOSED");
-    gates:
-		input fromUpperLayer;
-		output toUpperLayer;
-		input fromLowerLayer;
-		output toLowerLayer;
+packet HTTPClientMsg {
+    // TODO define HTTPClientMsg comprising at least a method and resource field
+    string method;
+    string resource;
 }

@@ -17,17 +17,18 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
-package src.tcp;
+#ifndef __AAU_HTTP_HTTPCLIENT_H_
+#define __AAU_HTTP_HTTPCLIENT_H_
 
-simple TCP
+#include <omnetpp.h>
+
+using namespace omnetpp;
+
+class HTTPClient : public cSimpleModule
 {
-    parameters:
-        int headerlength = default(20); 		// Length of header in bytes
-        double packetLossProb = default(0.1);
-        int initialState = default("CLOSED");
-    gates:
-		input fromUpperLayer;
-		output toUpperLayer;
-		input fromLowerLayer;
-		output toLowerLayer;
-}
+protected:
+    virtual void initialize();
+    virtual void handleMessage(cMessage *msg);
+};
+
+#endif
