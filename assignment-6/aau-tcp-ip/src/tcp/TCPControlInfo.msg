@@ -17,17 +17,32 @@
 //
 // 621.800 (19W) Computer Networks and Network Programming
 
-package src.tcp;
+cplusplus {{
+#include "../3rdParty/IPv4Address.h"
+#include "../3rdParty/IPv6Address.h"
+}}
 
-simple TCP
+class inet::IPv4Address
 {
-    parameters:
-        int headerlength = default(20); 		// Length of header in bytes
-        double packetLossProb = default(0.1);
-        int initialState = default("CLOSED");
-    gates:
-		input fromUpperLayer;
-		output toUpperLayer;
-		input fromLowerLayer;
-		output toLowerLayer;
+@existingClass;
+}
+
+class inet::IPv6Address
+{
+@existingClass;
+}
+
+message TCPControlInfo
+{
+    inet::IPv4Address srcIPv4;	// source IPv4 address
+    inet::IPv6Address srcIPv6;	// source IPv6 address
+    int srcPort;					// source port
+
+    inet::IPv4Address destIPv4;	// destination IPv4 address
+    inet::IPv6Address destIPv6;	// destination IPv6 address
+    int destPort;				// destination port
+
+    // you may use the following commands for the actual connection management between HTTP and TCP
+    int tcpCommand = 0;		// 0 ... do nothing, 1 ... open connection, 2 ... close connection
+    int tcpStatus = 0;		// 1 ... connection is open, 2 ... connection is closed
 }
