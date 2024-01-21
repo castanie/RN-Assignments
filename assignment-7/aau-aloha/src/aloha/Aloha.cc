@@ -32,7 +32,7 @@ void Aloha::initialize()
 {
     this->frameQueue = new std::queue<cMessage *>();
     this->timeoutEvent = new cMessage();
-    this->backoffFactor = 0;
+    this->backoffFactor = 1;
 }
 
 // ------------------------------------------------------ //
@@ -41,7 +41,8 @@ void Aloha::handleMessage(cMessage *msg)
 {
     if (msg->isSelfMessage())
     {
-        EV << "isSelfMessage" << endl;
+        EV << this->getParentModule()->getName() << ": "
+           << "isSelfMessage" << endl;
         if (!this->frameQueue->empty())
         {
             send(this->frameQueue->front()->dup(), "outLowerLayer");
@@ -59,33 +60,37 @@ void Aloha::handleMessage(cMessage *msg)
 
 void Aloha::handleUpperLayer(cMessage *msg)
 {
-    EV << "inUpperLayer" << endl;
+    EV << this->getParentModule()->getName() << ": "
+       << "inUpperLayer" << endl;
     IPDatagram *ipDatagram = (IPDatagram *)msg;
     this->encapsulateData(msg);
 }
 
 void Aloha::handleLowerLayer(cMessage *msg)
 {
-    EV << "inLowerLayer" << endl;
+    EV << this->getParentModule()->getName() << ": "
+       << "inLowerLayer" << endl;
     if (strcmp(msg->getName(), "COL") == 0)
     {
-        EV << "Collision signalled!" << endl;
+        EV << this->getParentModule()->getName() << ": "
+           << "Collision signalled!" << endl;
         if (!this->frameQueue->empty())
         {
-            EV << "Scheduled retransmisison at simTime() + " << ((std::rand() % 8) * par("slotDelay").doubleValue()) << "!" << endl;
-            scheduleAt(simTime() + ((std::rand() % 8) * par("slotDelay").doubleValue()), this->timeoutEvent);
+            this->backoffFactor *= 2;
+            double backoff = (std::rand() % this->backoffFactor) * par("slotDelay").doubleValue();
+
+            EV << this->getParentModule()->getName() << ": "
+               << "Scheduled retransmisison at simTime() + " << backoff << "!" << endl;
+            scheduleAt(simTime() + backoff, this->timeoutEvent);
         }
     }
     else if (strcmp(msg->getClassName(), "AlohaFrame") == 0)
     {
         AlohaFrame *alohaFrame = (AlohaFrame *)msg;
-        EV << getParentModule()->par("macAddress").stringValue() << endl;
-        EV << alohaFrame->getDest().str() << endl;
+        EV << this->getParentModule()->getName() << ": host-address =" << getParentModule()->par("macAddress").stringValue() << endl;
+        EV << this->getParentModule()->getName() << ": dest-address = " << alohaFrame->getDest().str() << endl;
 
         inet::MACAddress *macAddress = new inet::MACAddress(getParentModule()->par("macAddress").stringValue());
-
-        EV << (alohaFrame->getDest().compareTo(*macAddress) == 0) << endl;
-
         if (alohaFrame->getDest().compareTo(*macAddress) == 0)
         {
             // This message is directed at us.
@@ -96,6 +101,7 @@ void Aloha::handleLowerLayer(cMessage *msg)
             // If the link returns our message,
             // it has been relayed successfully.
             // We can remove it from the queue:
+            this->backoffFactor = 1;
             this->frameQueue->pop();
         }
     }
