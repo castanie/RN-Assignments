@@ -22,6 +22,7 @@ package src.aloha;
 simple Aloha {
     parameters:	   
         string macAddress;
+		double slotDelay = default(0.005);
 	gates:
 		input inUpperLayer;
 		output outUpperLayer;

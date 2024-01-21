@@ -27,16 +27,26 @@
 
 #include "../messages/AlohaControlInfo_m.h"
 #include "../messages/AlohaFrame_m.h"
+#include "../messages/IPDatagram_m.h"
 
 using namespace std;
 
-class Aloha: public cSimpleModule {
+class Aloha : public cSimpleModule
+{
+
+private:
+    std::queue<cMessage *> *frameQueue;
+    cMessage *timeoutEvent;
+    int backoffFactor;
+
 protected:
     virtual void initialize();
     virtual void handleMessage(cMessage *msg);
+    virtual void handleUpperLayer(cMessage *msg);
+    virtual void handleLowerLayer(cMessage *msg);
+    virtual void encapsulateData(cMessage *msg);
+    virtual void decapsulateData(cMessage *msg);
     virtual void sendCopyOf(cMessage *msg, double delay);
-    cMessage *frameBuf;
-    double maxWaitTime;
 };
 
 #endif /* ALOHA_H_ */
